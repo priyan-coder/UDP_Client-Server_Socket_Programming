@@ -45,7 +45,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
     while True:
         # file_size, cli_addr = s.recvfrom(4)
         # file_size = int(file_size.decode('utf8'))
-
         batch = 1
         pkt_count = 0
         message = bytearray()
@@ -54,8 +53,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 batch = 1
             data = s.recvfrom(batch * data_unit_size)[0]
             message.extend(data)
-            s.sendto(
-                bytes(str(len(message))+"\0", encoding='utf8'), cli_addr)
+            length_pkt = pack("!II", len(message), batch)
+            s.sendto(length_pkt, cli_addr)
             print(
                 f"Currently Received {len(message)} Bytes of data since beginning of transfer\n")
             pkt_count += batch

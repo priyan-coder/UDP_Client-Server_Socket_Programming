@@ -6,7 +6,7 @@ from struct import *
 
 PORT = 4950
 MAX_FILE_SIZE = 60000
-ACK_BUFFER = 4
+ACK_BUFFER = 8
 
 # run in cmd like this: udp_client.py localhost myfile.txt 500 (eg. if packet size is 500)
 try:
@@ -22,20 +22,18 @@ except IndexError:
 size = stat(FILE).st_size
 print(f"Size of file asked for transfer : {size}\n")
 if size > MAX_FILE_SIZE:
-    raise ValueError(f"File size exceeds limit of {MAX_FILE_SIZE} B\n")
+    raise ValueError(f"File size exceeds limit of {MAX_FILE_SIZE} Bytes\n")
 
 try:
     DATA_UNIT_SIZE = int(argv[3])
 except IndexError:
-    DATA_UNIT_SIZE = int(input("Enter packet size (B): "))
+    DATA_UNIT_SIZE = int(input("Enter packet size in Bytes: "))
 
 num_packs = ceil(size/DATA_UNIT_SIZE)
 print(f"Expected total number of data units for transfer : {num_packs}\n")
 
 
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s, open(FILE, "rb") as f:
-    # s.sendto(bytes(str(size)+"\0", encoding="utf8"), (HOST, PORT))
-    # s.sendto(bytes(str(DATA_UNIT_SIZE)+"\0",  encoding="utf8"), (HOST, PORT))
     pkt = pack("!II", size, DATA_UNIT_SIZE)
     s.sendto(pkt, (HOST, PORT))
     sent = 0
@@ -45,12 +43,13 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s, open(FILE, "rb") as 
             batch = 1
         msg = f.read(batch*DATA_UNIT_SIZE)
         s.sendto(msg, (HOST, PORT))
-        ack, srv_addr = s.recvfrom(ACK_BUFFER)
-        ack = int(ack.decode("utf8"))
+        ack_data, srv_addr = s.recvfrom(ACK_BUFFER)
+        ack, srv_current_batch = unpack("!II", ack_data)
         print(
-            f"Currenlty received total file size is {ack} bytes at server with addr : {srv_addr}\n")
+            f"Currenlty received total file size is {ack} bytes at server with addr : {srv_addr}\n Batch Number at server is : {srv_current_batch}")
         sent += batch * DATA_UNIT_SIZE
-        print(f"Sent by Client : {sent} Bytes\n")
+        print(
+            f"Sent by Client : {sent} Bytes\n Current Client Batch Number : {batch}\n")
         batch += 1
 
 
