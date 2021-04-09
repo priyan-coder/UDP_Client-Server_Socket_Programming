@@ -4,7 +4,7 @@ from os import stat
 from math import ceil
 from struct import *
 
-PORT = 4950
+PORT = 6000
 MAX_FILE_SIZE = 60000
 ACK_BUFFER = 8
 

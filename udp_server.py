@@ -32,19 +32,15 @@ import socket
 from struct import *
 
 HOST = 'localhost'  # Standard loopback interface address (localhost)
-PORT = 4950    # Port to listen on (non-privileged ports are > 1023)
+PORT = 6000  # Port to listen on (non-privileged ports are > 1023)
 
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
     s.bind((HOST, PORT))
     header, cli_addr = s.recvfrom(8)
     file_size, data_unit_size = unpack("!II", header)
-
     print(
         f"Connected by {cli_addr}\n, File size for transfer from client : {file_size}\n")
-    # data_unit_size = int(s.recvfrom(4)[0].decode('utf8'))
     while True:
-        # file_size, cli_addr = s.recvfrom(4)
-        # file_size = int(file_size.decode('utf8'))
         batch = 1
         pkt_count = 0
         message = bytearray()
@@ -55,7 +51,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             message.extend(data)
             length_pkt = pack("!II", len(message), batch)
             s.sendto(length_pkt, cli_addr)
-            print(
-                f"Currently Received {len(message)} Bytes of data since beginning of transfer\n")
             pkt_count += batch
+            print(
+                f"Currently Received {len(message)} Bytes of data since beginning of transfer\n Total Pkts Received so far = {pkt_count}\n")
             batch += 1
