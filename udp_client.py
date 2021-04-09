@@ -7,7 +7,7 @@ from math import ceil
 from hashlib import sha256
 
 PORT, MAX_FILE_SIZE, ACK_SIZE = 4950, 60000, 4
-# run in cmd like this: tcp_client3.py localhost myfile.txt 500 (eg. if packet size is 500)
+# run in cmd like this: udp_client.py localhost myfile.txt 500 (eg. if packet size is 500)
 try:
     HOST = argv[1]
 except IndexError:
@@ -27,12 +27,16 @@ try:
 except IndexError:
     DATA_UNIT_SIZE = int(input("Enter packet size (B): "))
 
+num_packs = ceil(size/DATA_UNIT_SIZE)
+printf(f"Expected total data units for transfer : {num_packs}\n")
+
 
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s, open(FILE, "rb") as f:        
     packet = pack("!II", DATA_UNIT_SIZE, size)
     s.sendto(packet, (HOST,PORT))
     full_msg = bytearray()
     start = time_ns()
+    count = 0
     sent = 0
     j = 1
     while(sent < size):
@@ -44,12 +48,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s, open(FILE, "rb") as 
         packet = pack(f"{msg_size}s", msg)
         s.sendto(packet, (HOST,PORT))
         if(ack = unpack(f"!I", s.recvfrom(ACK_SIZE))[0]):
+            count += j
             print(f"Received ACK{ack}\nTransferred {msg_size} Bytes\n")
             continue
         j+=1
         sent+=msg_size
 
 transfer_time = time_ns() - start
+print(f"Transferred {count} data units \n")
 print(f"Transferred {size} Bytes in {transfer_time} ns \n")
 # try:
 #     data_rate = (size/1024) / (rtt/(10**9))

@@ -8,13 +8,15 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
     s.bind((HOST, PORT))
     while True:
             msg = bytearray()
-            pack_size, total_size = unpack("!II", s.recvfrom(HEADER))
+            count = 0
+            DATA_UNIT_SIZE, TOTAL_FILE_SIZE = unpack("!II", s.recvfrom(HEADER))
             j = 1
-            while len(msg) < total_size:
+            while len(msg) < TOTAL_FILE_SIZE:
                 if(j > 3):
                     j = 1
-                msg.extend(s.recvfrom(j*pack_size))
-                ack = pack(f"!I",j*pack_size)
+                msg.extend(s.recvfrom(j*DATA_UNIT_SIZE))
+                count +=j
+                ack = pack(f"!I",count)
                 s.sendto(ack, (HOST, PORT))
                 j+=1
         print(f"Received {len(msg) + HEADER} B packets")
