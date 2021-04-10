@@ -5,15 +5,15 @@ from hashlib import sha256
 HOST = 'localhost'  # Standard loopback interface address (localhost)
 # Port to listen on (non-privileged ports are > 1023)
 HEADER_SIZE = 8
+while True:
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.bind((HOST, 0))
+        print(f"UDP Server running on PORT: {s.getsockname()[1]}\n")
+        header, cli_addr = s.recvfrom(HEADER_SIZE)
+        file_size, data_unit_size = unpack("!II", header)
+        print(
+            f"Connected by Client : {cli_addr}\n, File size for transfer from client : {file_size}\n")
 
-with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-    s.bind((HOST, 0))
-    print(f"UDP Server running on PORT: {s.getsockname()[1]}\n")
-    header, cli_addr = s.recvfrom(HEADER_SIZE)
-    file_size, data_unit_size = unpack("!II", header)
-    print(
-        f"Connected by Client : {cli_addr}\n, File size for transfer from client : {file_size}\n")
-    while True:
         batch = 1
         pkt_count = 0
         message = bytearray()
@@ -33,3 +33,4 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             batch += 1
         print(
             f"SHA256 checksum of received data: {sha256(message).hexdigest()}\n")
+        s.close()
